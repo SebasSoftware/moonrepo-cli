@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { colors } from "../ui.ts";
-import { createFile } from "../utils.ts";
+import { checkFileExists, createFile } from "../utils.ts";
 import {
   FRONTEND_FRAMEWORKS,
   FRONTEND_LABELS,
@@ -24,7 +24,7 @@ import {
   viteTailwindIndexCss,
 } from "../templates.ts";
 import { execa, ExecaError } from "execa";
-import ora, { spinners } from "ora";
+import ora from "ora";
 
 /**
  * Generate the chosen frontend app under <projectPath>/apps/frontend.
@@ -43,7 +43,11 @@ export async function generateFrontend(
   await fs.ensureDir(frontendPath);
 
   if (frontend === FRONTEND_FRAMEWORKS.VITE) {
-    await generateVite(frontendPath, options.withTailwind);
+    await generateVite(
+      frontendPath,
+      options.withTailwind,
+      FRONTEND_LABELS.vite,
+    );
   } else if (frontend === FRONTEND_FRAMEWORKS.NEXT) {
     await generateNext(frontendPath, FRONTEND_LABELS.next);
   } else {
@@ -52,6 +56,88 @@ export async function generateFrontend(
 }
 
 async function generateVite(
+  frontendPath: string,
+  withTailwind: boolean,
+  techLabel: string,
+): Promise<void> {
+  const maxRetries = 3;
+  const command = "pnpm";
+  const commandTags = ["create", "vite", "frontend", "-t", "react", "--eslint"];
+
+  let loading = true;
+  let i = 1;
+
+  while (loading) {
+    const spinner = ora({
+      text: colors.cyan(`Creando ${techLabel}...`),
+      color: "yellow",
+    }).start();
+    try {
+      const process = execa(command, commandTags, {
+        stdio: ["pipe", "pipe", "pipe"],
+        cwd: `${frontendPath}`,
+      });
+      process.stdin.write("\u001b[C\n");
+      process.stdin.end();
+      await process;
+
+      if (withTailwind) {
+        spinner.text = colors.cyan(`Iniciando Tailwindcss...`);
+        const viteConfigExists = await checkFileExists(
+          path.join(frontendPath, "frontend", "vite.config.js"),
+        );
+
+        if (viteConfigExists) {
+          const frontendDir = path.join(frontendPath, "frontend");
+          await execa(
+            "pnpm",
+            ["add", "-D", "tailwindcss", "@tailwindcss/vite"],
+            { cwd: frontendDir },
+          );
+          await setupTailwindVite(frontendDir);
+        }
+      }
+
+      loading = false;
+      spinner.succeed(colors.success("Frontend listo"));
+    } catch (error) {
+      spinner.stop();
+      if (i >= maxRetries) {
+        loading = false;
+
+        if (error instanceof ExecaError) {
+          console.log(
+            `${colors.cross} ${colors.brand("Frontend Error")}: ${error.message}`,
+          );
+          const fallbackSpinner = ora({
+            text: colors.cyan(`Creando ${techLabel} Manualmente...`),
+            color: "yellow",
+          }).start();
+          await new Promise((resolve) => setTimeout(resolve, 2500));
+
+          await generateViteManual(
+            path.join(frontendPath, "frontend"),
+            withTailwind,
+          );
+
+          fallbackSpinner.succeed(colors.success("Frontend listo"));
+        } else {
+          console.log(
+            `${colors.cross} ${colors.brand("Frontend Error")}: ${error}`,
+          );
+        }
+      } else {
+        console.log(
+          `${colors.brand(`Intento ${i}/${maxRetries} falló. Reintentando en ${i + 1}s... (${i + 1}/${maxRetries})`)}`,
+        );
+        i += 1;
+        await new Promise((resolve) => setTimeout(resolve, 1000 * i));
+      }
+    }
+  }
+}
+
+async function generateViteManual(
   frontendPath: string,
   withTailwind: boolean,
 ): Promise<void> {
@@ -134,18 +220,20 @@ async function generateNext(
   let i = 1;
 
   while (loading) {
+    const spinner = ora({
+      text: colors.cyan(`Creando ${techLabel}...`),
+      color: "yellow",
+    }).start();
     try {
-      console.log(
-        `${colors.info(`Intentando crear proyecto de ${techLabel}...`)}`,
-      );
       await execa(command, commandTags, {
         stdio: "ignore",
         cwd: `${frontendPath}`,
       });
 
       loading = false;
-      console.log(colors.success("Frontend listo"));
+      spinner.succeed(colors.success("Frontend listo"));
     } catch (error) {
+      spinner.stop();
       if (i >= maxRetries) {
         loading = false;
 
@@ -153,14 +241,14 @@ async function generateNext(
           console.log(
             `${colors.cross} ${colors.brand("Frontend Error")}: ${error.message}`,
           );
-          const spinner = ora({
-            text: colors.cyan(`Creando ${techLabel} Manúalmente...`),
+          const fallbackSpinner = ora({
+            text: colors.cyan(`Creando ${techLabel} Manualmente...`),
             color: "yellow",
           }).start();
           await new Promise((resolve) => setTimeout(resolve, 2500));
 
           await generateNextManual(path.join(frontendPath, "frontend"));
-          spinner.succeed(colors.success("Frontend listo"));
+          fallbackSpinner.succeed(colors.success("Frontend listo"));
         } else {
           console.log(
             `${colors.cross} ${colors.brand("Frontend Error")}: ${error}`,
@@ -175,16 +263,6 @@ async function generateNext(
       }
     }
   }
-}
-
-/** Pretty log line — used by index.ts after generation succeeds. */
-export function frontendDoneLabel(
-  frontend: FrontendFramework,
-  withTailwind: boolean,
-): string {
-  const tail =
-    frontend === FRONTEND_FRAMEWORKS.VITE && withTailwind ? " + Tailwind" : "";
-  return `${colors.cyan(frontend)}${colors.muted(tail)}`;
 }
 
 async function generateNextManual(frontendPath: string): Promise<void> {
@@ -221,4 +299,65 @@ async function generateNextManual(frontendPath: string): Promise<void> {
     filePath: path.join(frontendPath, "src", "app", "page.tsx"),
     content: nextAppPage,
   });
+}
+
+/** Pretty log line — used by index.ts after generation succeeds. */
+export function frontendDoneLabel(
+  frontend: FrontendFramework,
+  withTailwind: boolean,
+): string {
+  const tail =
+    frontend === FRONTEND_FRAMEWORKS.VITE && withTailwind ? " + Tailwind" : "";
+  return `${colors.cyan(frontend)}${colors.muted(tail)}`;
+}
+
+async function setupTailwindVite(frontendDir: string): Promise<void> {
+  const viteConfigPath = path.join(frontendDir, "vite.config.js");
+  const cssPath = path.join(frontendDir, "src", "index.css");
+
+  // 1. Modificar vite.config.js
+  let viteConfig = await fs.readFile(viteConfigPath, "utf-8");
+
+  // Agregar import si no existe
+  const importStatement = `import tailwindcss from '@tailwindcss/vite';`;
+  if (!viteConfig.includes(importStatement)) {
+    // Insertar justo después del último import existente (o al principio)
+    const lastImportRegex = /^(import .+;)$/m;
+    const match = viteConfig.match(lastImportRegex);
+    if (match) {
+      const lastImportEnd = match.index! + match[0].length;
+      viteConfig =
+        viteConfig.slice(0, lastImportEnd) +
+        `\n${importStatement}` +
+        viteConfig.slice(lastImportEnd);
+    } else {
+      viteConfig = `${importStatement}\n${viteConfig}`;
+    }
+  }
+
+  // Agregar tailwindcss() al array de plugins
+  // Suponemos que existe "plugins: [" o "plugins:["
+  const pluginRegex = /plugins\s*:\s*\[/;
+  if (pluginRegex.test(viteConfig)) {
+    viteConfig = viteConfig.replace(
+      pluginRegex,
+      (match) => `${match} tailwindcss(),`,
+    );
+  } else {
+    // Si no hay plugins, creamos la sección completa
+    viteConfig = viteConfig.replace(
+      /(export\s+default\s+defineConfig\s*\(\s*\{)/,
+      `$1\n  plugins: [tailwindcss()],`,
+    );
+  }
+
+  await fs.writeFile(viteConfigPath, viteConfig, "utf-8");
+
+  // 2. Modificar src/index.css
+  let cssContent = await fs.readFile(cssPath, "utf-8");
+  const tailwindImport = '@import "tailwindcss";';
+  if (!cssContent.startsWith(tailwindImport)) {
+    cssContent = `${tailwindImport}\n${cssContent}`;
+  }
+  await fs.writeFile(cssPath, cssContent, "utf-8");
 }

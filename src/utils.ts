@@ -37,7 +37,9 @@ export function createFile({ filePath, content }: CreateFileParams): void {
   fs.writeFileSync(filePath, content ?? "", "utf8");
 
   if (!fs.pathExistsSync(filePath)) {
-    throw new Error(`createFile: file did not appear on disk after write: ${filePath}`);
+    throw new Error(
+      `createFile: file did not appear on disk after write: ${filePath}`,
+    );
   }
 }
 
@@ -45,6 +47,20 @@ export function createFile({ filePath, content }: CreateFileParams): void {
 export async function createFolder(absolutePath: string): Promise<void> {
   await fs.ensureDir(absolutePath);
   if (!(await fs.pathExists(absolutePath))) {
-    throw new Error(`createFolder: directory did not appear on disk: ${absolutePath}`);
+    throw new Error(
+      `createFolder: directory did not appear on disk: ${absolutePath}`,
+    );
   }
 }
+
+export const checkFileExists = async (
+  filePath: string,
+  maxRetries = 5,
+): Promise<boolean> => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const exists = await fs.pathExists(filePath);
+    if (exists) return true;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  return false;
+};
