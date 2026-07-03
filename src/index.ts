@@ -1,8 +1,8 @@
+#!/usr/bin/env node
+
 import inquirer from "inquirer";
-import ora from "ora";
 import fs from "fs-extra";
 import path from "node:path";
-
 import { printBanner, printDivider, printTagline } from "./banner.ts";
 import {
   BACKEND_FRAMEWORKS,
@@ -12,8 +12,8 @@ import {
   type BackendFramework,
   type FrontendFramework,
 } from "./enums.ts";
-import { generateBackend, backendDoneLabel } from "./generators/backend.ts";
-import { frontendDoneLabel, generateFrontend } from "./generators/frontend.ts";
+import { generateBackend } from "./generators/backend.ts";
+import { generateFrontend } from "./generators/frontend.ts";
 import { generateWorkspace } from "./generators/workspace.ts";
 import { colors } from "./ui.ts";
 
@@ -21,6 +21,7 @@ import { colors } from "./ui.ts";
 // 1. Launch screen
 // ---------------------------------------------------------------------------
 
+console.log("\n");
 printBanner();
 printTagline();
 printDivider();
@@ -94,34 +95,14 @@ const { backend } = await inquirer.prompt<{ backend: BackendFramework }>([
 
 const answers: CliAnswers = { projectName, frontend, backend, withTailwind };
 
-// ---------------------------------------------------------------------------
-// 3. Summary of what we're about to build
-// ---------------------------------------------------------------------------
-
-printDivider();
-process.stdout.write(`${colors.arrow} ${colors.dim("Resumen")}\n`);
-process.stdout.write(
-  `  ${colors.bullet} ${colors.muted("Proyecto:")}    ${colors.brand(projectName)}\n`,
-);
-process.stdout.write(
-  `  ${colors.bullet} ${colors.muted("Frontend:")}    ${frontendDoneLabel(answers.frontend, answers.withTailwind)}\n`,
-);
-process.stdout.write(
-  `  ${colors.bullet} ${colors.muted("Backend:")}     ${backendDoneLabel(answers.backend)}\n`,
-);
-process.stdout.write(
-  `  ${colors.bullet} ${colors.muted("Ubicación:")}   ${colors.dim(path.resolve(process.cwd(), projectName))}\n`,
-);
 printDivider();
 
 // ---------------------------------------------------------------------------
-// 4. Generate
+// 3. Generate
 // ---------------------------------------------------------------------------
 
 const projectPath = path.join(process.cwd(), projectName);
 
-// Refuse to overwrite an existing directory — saves the user from
-// accidentally clobbering work.
 if (await fs.pathExists(projectPath)) {
   process.stderr.write(
     `\n${colors.cross} La carpeta ${colors.brand(projectName)} ya existe en ${colors.dim(path.dirname(projectPath))}\n`,
@@ -146,19 +127,9 @@ try {
     throw err;
   }
 
-  const beSpinner = ora({
-    text: colors.muted(
-      `Generando backend (${BACKEND_LABELS[answers.backend]})...`,
-    ),
-    color: "yellow",
-  }).start();
   try {
     await generateBackend(projectPath, answers.backend);
-    beSpinner.succeed(colors.success("Backend listo"));
   } catch (err) {
-    beSpinner.fail(
-      colors.error(`Error generando backend: ${(err as Error).message}`),
-    );
     throw err;
   }
 } catch (err) {
@@ -170,7 +141,7 @@ try {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Next steps
+// 4. Next steps
 // ---------------------------------------------------------------------------
 
 printDivider();

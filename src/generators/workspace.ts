@@ -1,7 +1,16 @@
 import fs from "fs-extra";
 import path from "node:path";
-import { createFile } from "../utils.ts";
-import { gitignore, pnpmWorkspaceTemplate, rootPackageJson, rootReadme, turboJsonTemplate } from "../templates.ts";
+import { checkFileExists, createFile } from "../utils.ts";
+import {
+  gitignore,
+  pnpmWorkspaceTemplate,
+  rootPackageJson,
+  rootReadme,
+  turboJsonTemplate,
+} from "../templates.ts";
+import { $ } from "execa";
+import { colors } from "../ui.ts";
+import ora from "ora";
 
 /**
  * Generate the root-level workspace files:
@@ -24,10 +33,6 @@ export async function generateWorkspace(
   await fs.ensureDir(projectPath);
 
   createFile({
-    filePath: path.join(projectPath, "package.json"),
-    content: rootPackageJson(projectName),
-  });
-  createFile({
     filePath: path.join(projectPath, "pnpm-workspace.yaml"),
     content: pnpmWorkspaceTemplate,
   });
@@ -43,4 +48,33 @@ export async function generateWorkspace(
     filePath: path.join(projectPath, "README.md"),
     content: rootReadme(projectName, frontendLabel, backendLabel),
   });
+
+  createFile({
+    filePath: path.join(projectPath, "package.json"),
+    content: rootPackageJson(projectName),
+  });
+
+  const spinner = ora({
+    text: colors.git(`Iniciando Git...`),
+    color: "white",
+  }).start();
+  try {
+    await $({ stdio: "ignore", cwd: projectPath })`git init`;
+
+    const gitProject = await checkFileExists(path.join(projectPath, ".git"));
+    if (!gitProject) {
+      throw new Error(colors.error("Error "));
+    } else {
+      spinner.succeed(colors.success("Git Listo"));
+    }
+  } catch (error) {
+    spinner.stop();
+    console.log(
+      colors.error(
+        `Error iniciando git, por favor ejecute el 'git init' en ./${
+          projectName
+        }`,
+      ),
+    );
+  }
 }

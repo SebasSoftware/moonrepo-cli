@@ -12,8 +12,10 @@ export const BACKEND_FRAMEWORKS = {
   NEST: "nest",
 } as const;
 
-export type FrontendFramework = (typeof FRONTEND_FRAMEWORKS)[keyof typeof FRONTEND_FRAMEWORKS];
-export type BackendFramework = (typeof BACKEND_FRAMEWORKS)[keyof typeof BACKEND_FRAMEWORKS];
+export type FrontendFramework =
+  (typeof FRONTEND_FRAMEWORKS)[keyof typeof FRONTEND_FRAMEWORKS];
+export type BackendFramework =
+  (typeof BACKEND_FRAMEWORKS)[keyof typeof BACKEND_FRAMEWORKS];
 
 // Human-friendly labels (displayed in prompts).
 export const FRONTEND_LABELS: Record<FrontendFramework, string> = {
@@ -27,7 +29,9 @@ export const BACKEND_LABELS: Record<BackendFramework, string> = {
 };
 
 export function isFrontendFramework(value: string): value is FrontendFramework {
-  return Object.values(FRONTEND_FRAMEWORKS).includes(value as FrontendFramework);
+  return Object.values(FRONTEND_FRAMEWORKS).includes(
+    value as FrontendFramework,
+  );
 }
 
 export function isBackendFramework(value: string): value is BackendFramework {

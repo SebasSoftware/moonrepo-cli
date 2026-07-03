@@ -49,7 +49,7 @@ export const rootReadme = (
   backend: string,
 ) => `# ${projectName}
 
-Monorepo scaffolded with [Moonrepo CLI](https://github.com/your-org/moonrepo).
+Monorepo scaffolded with [Moonrepo CLI](https://github.com/SebasSoftware/moonrepo-cli).
 
 ## Stack
 
@@ -126,6 +126,9 @@ export const viteIndexHtml = (name: string) => `<!doctype html>
 </html>
 `;
 
+export const viteEnvD = `/// <reference types="vite/client" />
+`;
+
 export const viteMainTsx = `import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
@@ -169,6 +172,25 @@ export default defineConfig({
 });
 `;
 
+export const viteTsConfigJson = `{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["src", "vite.config.ts"]
+}
+`;
+
 export const viteTailwindConfig = `/** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
@@ -197,7 +219,7 @@ export const viteTailwindIndexCss = `@tailwind base;
 // Next.js
 // ---------------------------------------------------------------------------
 
-export const nextPackageJson = (name: string) => `{
+export const nextPackageJson = () => `{
   "name": "frontend",
   "version": "1.0.0",
   "private": true,
@@ -244,6 +266,13 @@ export const nextTsConfig = `{
 }
 `;
 
+export const nextEnvD = `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+`;
+
 export const nextConfig = `/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -284,7 +313,7 @@ export const nextAppPage = `export default function Home() {
 // Express
 // ---------------------------------------------------------------------------
 
-export const expressPackageJson = (name: string) => `{
+export const expressPackageJson = () => `{
   "name": "backend",
   "version": "1.0.0",
   "private": true,
@@ -329,14 +358,10 @@ export const expressTsConfig = `{
 `;
 
 export const expressIndexTs = `import express from "express";
-import cors from "cors";
-import morgan from "morgan";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-app.use(cors());
-app.use(morgan("dev"));
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
@@ -498,4 +523,131 @@ pnpm-debug.log*
 .vscode/
 .idea/
 .DS_Store
+`;
+
+export const presentPageTailwind = `import React from "react";
+
+interface PresentProps {
+  projectName: string;
+  frontend: string;
+  useTailwind: boolean;
+  backend: string;
+  gitReady: boolean;
+  frontendReady: boolean;
+  backendReady: boolean;
+}
+
+const Present: React.FC<PresentProps> = ({
+  projectName,
+  frontend,
+  useTailwind,
+  backend,
+  gitReady,
+  frontendReady,
+  backendReady,
+}) => {
+  return (
+    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans antialiased">
+      <div className="max-w-2xl mx-auto py-12 px-4 flex flex-col justify-center items-center">
+        {/* Título con brand red */}
+        <h1 className="text-5xl font-bold text-[#FF3B30] text-center tracking-tight drop-shadow-lg">
+          🚀 Moonrepo CLI
+        </h1>
+
+        <div className="mt-3 text-center text-lg text-gray-400 flex justify-center items-center">
+          <span className="flex items-center gap-1">
+            <span className="rounded bg-purple-200 px-1.5 py-0.5 text-xs font-mono text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+              pnpm
+            </span>
+            <span className="text-gray-400">+</span>
+            <span className="rounded bg-blue-200 px-1.5 py-0.5 text-xs font-mono text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+              turbo
+            </span>
+            <span className="text-gray-400">+</span>
+            <span className="rounded bg-emerald-200 px-1.5 py-0.5 text-xs font-mono text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+              monorepo
+            </span>
+          </span>{" "}
+          – scaffolded in seconds
+        </div>
+
+        {/* Resumen de configuración - Fondo gris oscuro con borde sutil */}
+        <div className="mt-10 bg-gray-800 rounded-xl p-6 shadow-2xl border border-gray-700">
+          <h2 className="text-2xl font-semibold text-[#FF3B30] flex items-center gap-2">
+            <span>✨</span> TOMORROW
+          </h2>
+
+          <ul className="mt-4 space-y-2 text-base">
+            <li>
+              <span className="font-medium text-gray-400">
+                📦 Nombre del proyecto:
+              </span>{" "}
+              <span className="font-mono bg-gray-900 px-2 py-0.5 rounded text-[#A78BFA] border border-gray-700">
+                {projectName}
+              </span>
+            </li>
+            <li>
+              <span className="font-medium text-gray-400">
+                ⚛️ Framework FRONTEND:
+              </span>{" "}
+              <span className="text-white">{frontend}</span>
+            </li>
+            <li>
+              <span className="font-medium text-gray-400">
+                🎨 Tailwind CSS:
+              </span>{" "}
+              <span className="text-white">{useTailwind ? "Sí" : "No"}</span>
+            </li>
+            <li>
+              <span className="font-medium text-gray-400">
+                🖥️ Framework BACKEND:
+              </span>{" "}
+              <span className="text-white">{backend}</span>
+            </li>
+          </ul>
+
+          <hr className="my-4 border-gray-700" />
+
+          <ul className="space-y-2 text-base">
+            <li className="flex items-center gap-2">
+              <span className="text-[#22C55E] text-xl">✔</span> Git{" "}
+              <span className="text-white">
+                {gitReady ? "listo" : "no configurado"}
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-[#22C55E] text-xl">✔</span> Frontend{" "}
+              <span className="text-white">
+                {frontendReady ? "listo" : "pendiente"}
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-[#22C55E] text-xl">✔</span> Backend{" "}
+              <span className="text-white">
+                {backendReady ? "listo" : "pendiente"}
+              </span>
+            </li>
+          </ul>
+
+          {/* Mensaje de éxito con fondo púrpura semi-transparente */}
+          <div className="mt-6 p-4 bg-[#A78BFA]/10 rounded-md border border-[#A78BFA]/30">
+            <p className="text-gray-200">
+              🎉 ¡Listo! Tu monorepo está en{" "}
+              <code className="bg-gray-900 px-2 py-0.5 rounded font-mono text-[#FF3B30] border border-gray-700">
+                {projectName}
+              </code>
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-10 text-center text-sm text-gray-500">
+          Hecho con ❤ por Moonrepo CLI
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Present;
 `;

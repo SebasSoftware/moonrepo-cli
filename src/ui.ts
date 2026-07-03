@@ -27,6 +27,7 @@ export const colors = {
   cyan: chalk.cyan,
   magenta: chalk.hex("#EC4899").bold, // pink
   yellow: chalk.hex("#FACC15").bold,
+  git: chalk.hex("#F59F00"),
 
   // Glyphs
   arrow: chalk.hex("#FF3B30").bold("▸"),
@@ -44,17 +45,35 @@ export const colors = {
 export const brandName = (name: string) => colors.brand(name);
 
 /** Decorative horizontal rule. */
-export function hr(char = "─", width = 56, color: (s: string) => string = colors.dim): string {
+export function hr(
+  char = "─",
+  width = 56,
+  color: (s: string) => string = colors.dim,
+): string {
   return color(char.repeat(width));
 }
 
 /** Box a string block with a coloured frame. */
-export function box(title: string, body: string[], color: (s: string) => string = colors.brand): string {
-  const width = Math.max(title.length + 4, ...body.map((l) => l.length + 2), 40);
+export function box(
+  title: string,
+  body: string[],
+  color: (s: string) => string = colors.brand,
+): string {
+  const width = Math.max(
+    title.length + 4,
+    ...body.map((l) => l.length + 2),
+    40,
+  );
   const top = color("╭" + "─".repeat(width) + "╮");
-  const titleLine = color("│ ") + chalk.bold(title) + color(" │").padStart(width - title.length + 1, " ");
+  const titleLine =
+    color("│ ") +
+    chalk.bold(title) +
+    color(" │").padStart(width - title.length + 1, " ");
   const bottom = color("╰" + "─".repeat(width) + "╯");
-  const bodyLines = body.map((line) => color("│ ") + line + color(" │").padStart(width - line.length + 1, " "));
+  const bodyLines = body.map(
+    (line) =>
+      color("│ ") + line + color(" │").padStart(width - line.length + 1, " "),
+  );
   return [top, titleLine, ...bodyLines, bottom].join("\n");
 }
 
