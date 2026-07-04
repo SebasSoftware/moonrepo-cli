@@ -1,20 +1,20 @@
 import fs from "fs-extra";
 import path from "node:path";
 import { colors } from "../ui.ts";
-import { addViteConfig, checkFileExists, createFile } from "../utils.ts";
 import {
-  FRONTEND_FRAMEWORKS,
-  FRONTEND_LABELS,
-  type FrontendFramework,
-} from "../enums.ts";
+  addViteConfig,
+  checkFileExists,
+  createFile,
+  deleteFile,
+} from "../utils.ts";
 import {
   nextAppLayout,
-  nextAppPage,
   nextConfig,
   nextEnvD,
   nextPackageJson,
   nextTsConfig,
-  viteAppTsx,
+  presentPage,
+  presentPageTailwind,
   viteConfigTs,
   viteEnvD,
   viteIndexCss,
@@ -28,6 +28,8 @@ import {
 } from "../templates.ts";
 import { execa, ExecaError } from "execa";
 import ora from "ora";
+import type { CliAnswers, FrontendFramework } from "../types.d.ts";
+import { FRONTEND_FRAMEWORKS, FRONTEND_LABELS } from "../constants.ts";
 
 /**
  * Generate the chosen frontend app under <projectPath>/apps/frontend.
@@ -41,6 +43,7 @@ export async function generateFrontend(
   projectPath: string,
   frontend: FrontendFramework,
   options: { withTailwind: boolean },
+  answers: CliAnswers,
 ): Promise<void> {
   const frontendPath = path.join(projectPath, "apps");
   await fs.ensureDir(frontendPath);
@@ -50,9 +53,15 @@ export async function generateFrontend(
       frontendPath,
       options.withTailwind,
       FRONTEND_LABELS.vite,
+      answers,
     );
   } else if (frontend === FRONTEND_FRAMEWORKS.NEXT) {
-    await generateNext(frontendPath, FRONTEND_LABELS.next);
+    await generateNext(
+      frontendPath,
+      options.withTailwind,
+      FRONTEND_LABELS.next,
+      answers,
+    );
   } else {
     throw new Error(`Unknown frontend framework: ${frontend}`);
   }
@@ -62,9 +71,9 @@ async function generateVite(
   frontendPath: string,
   withTailwind: boolean,
   techLabel: string,
+  answers: CliAnswers,
 ): Promise<void> {
   const maxRetries = 3;
-  // pnpm create vite frontend --no-immediate --eslint
   const command = "pnpm";
   const commandTags = [
     "create",
@@ -96,6 +105,7 @@ async function generateVite(
       );
 
       if (viteConfigExists) {
+        spinner.text = colors.cyan(`Configurando outputs...`);
         await addViteConfig<boolean>(
           path.join(frontendPath, "frontend", "vite.config.ts"),
           { key: "clearScreen", value: false },
@@ -119,6 +129,22 @@ async function generateVite(
         }
       }
 
+      spinner.text = colors.cyan(`Estableziendo plantilla...`);
+      await deleteFile(path.join(frontendPath, "frontend", "src", "App.tsx"));
+      await deleteFile(path.join(frontendPath, "frontend", "src", "App.css"));
+
+      if (withTailwind) {
+        createFile({
+          filePath: path.join(frontendPath, "frontend", "src", "App.tsx"),
+          content: presentPageTailwind(answers),
+        });
+      } else {
+        createFile({
+          filePath: path.join(frontendPath, "frontend", "src", "App.tsx"),
+          content: presentPage(answers),
+        });
+      }
+
       loading = false;
       spinner.succeed(colors.success("Frontend listo"));
     } catch (error) {
@@ -139,6 +165,7 @@ async function generateVite(
           await generateViteManual(
             path.join(frontendPath, "frontend"),
             withTailwind,
+            answers,
           );
 
           fallbackSpinner.succeed(
@@ -163,6 +190,7 @@ async function generateVite(
 async function generateViteManual(
   frontendPath: string,
   withTailwind: boolean,
+  answers: CliAnswers,
 ): Promise<void> {
   const appName = path.basename(path.dirname(path.dirname(frontendPath)));
 
@@ -190,7 +218,7 @@ async function generateViteManual(
   });
   createFile({
     filePath: path.join(frontendPath, "src", "App.tsx"),
-    content: viteAppTsx,
+    content: withTailwind ? presentPageTailwind(answers) : presentPage(answers),
   });
   createFile({
     filePath: path.join(frontendPath, "src", "index.css"),
@@ -215,11 +243,19 @@ async function generateViteManual(
 
 async function generateNext(
   frontendPath: string,
+  withTailwind: boolean,
   techLabel: string,
+  answers: CliAnswers,
 ): Promise<void> {
   const maxRetries = 3;
   const command = "pnpm";
-  const commandTags = ["dlx", "create-next-app", "frontend", "--skip-install"];
+  const commandTags = [
+    "dlx",
+    "create-next-app",
+    "frontend",
+    "--skip-install",
+    withTailwind === false ? "--no-tailwind" : "",
+  ];
 
   let loading = true;
   let i = 1;
@@ -234,6 +270,29 @@ async function generateNext(
         stdio: "ignore",
         cwd: `${frontendPath}`,
       });
+
+      const nextConfigExists = await checkFileExists(
+        path.join(frontendPath, "frontend", "next.config.ts"),
+      );
+
+      if (nextConfigExists) {
+        spinner.text = colors.cyan(`Estableziendo plantilla...`);
+        await deleteFile(
+          path.join(frontendPath, "frontend", "app", "page.tsx"),
+        );
+
+        if (withTailwind) {
+          createFile({
+            filePath: path.join(frontendPath, "frontend", "app", "page.tsx"),
+            content: presentPageTailwind(answers),
+          });
+        } else {
+          createFile({
+            filePath: path.join(frontendPath, "frontend", "app", "page.tsx"),
+            content: presentPage(answers),
+          });
+        }
+      }
 
       loading = false;
       spinner.succeed(colors.success("Frontend listo"));
@@ -252,7 +311,11 @@ async function generateNext(
           }).start();
           await new Promise((resolve) => setTimeout(resolve, 2500));
 
-          await generateNextManual(path.join(frontendPath, "frontend"));
+          await generateNextManual(
+            path.join(frontendPath, "frontend"),
+            withTailwind,
+            answers,
+          );
           fallbackSpinner.succeed(
             colors.success("Frontend creado manualmente"),
           );
@@ -272,7 +335,11 @@ async function generateNext(
   }
 }
 
-async function generateNextManual(frontendPath: string): Promise<void> {
+async function generateNextManual(
+  frontendPath: string,
+  withTailwind: boolean,
+  asnwers: CliAnswers,
+): Promise<void> {
   createFile({
     filePath: path.join(frontendPath, "package.json"),
     content: nextPackageJson(),
@@ -297,8 +364,16 @@ async function generateNextManual(frontendPath: string): Promise<void> {
   });
   createFile({
     filePath: path.join(frontendPath, "src", "app", "page.tsx"),
-    content: nextAppPage,
+    content: withTailwind ? presentPageTailwind(asnwers) : presentPage(asnwers),
   });
+
+  if (withTailwind) {
+    console.log(
+      `${colors.cross} ${colors.error(
+        "Hubo un error durante la creacion de NextJS, Por favor instale Tailwind CSS manualmente",
+      )}`,
+    );
+  }
 }
 
 async function setupTailwindVite(
@@ -341,7 +416,7 @@ async function setupTailwindVite(
   let cssContent = await fs.readFile(cssPath, "utf-8");
   const tailwindImport = '@import "tailwindcss";';
   if (!cssContent.startsWith(tailwindImport)) {
-    cssContent = `${tailwindImport}\n${cssContent}`;
+    cssContent = `${tailwindImport}\n`;
   }
   await fs.writeFile(cssPath, cssContent, "utf-8");
 }

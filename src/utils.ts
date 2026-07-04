@@ -107,10 +107,8 @@ export async function addViteConfig<T>(
   filePath: string,
   configObj: { key: string; value: T },
 ) {
-  // 1. Leer el archivo
   const content = await fs.readFile(filePath, "utf8");
 
-  // 2. Localizar el inicio de defineConfig mediante regex
   const defineConfigRegex = /export\s+default\s+defineConfig\s*\(/;
   const match = defineConfigRegex.exec(content);
   if (!match) {
@@ -120,13 +118,11 @@ export async function addViteConfig<T>(
   }
   const startAfterDefine = match.index + match[0].length;
 
-  // 3. Encontrar la primera llave de apertura del objeto
   const openBraceIndex = content.indexOf("{", startAfterDefine);
   if (openBraceIndex === -1) {
     throw new Error('No se encontró el objeto de configuración (falta "{").');
   }
 
-  // 4. Encontrar la llave de cierre correspondiente (balanceo de llaves)
   let braceCount = 0;
   let closeBraceIndex = -1;
   for (let i = openBraceIndex; i < content.length; i++) {
@@ -146,15 +142,21 @@ export async function addViteConfig<T>(
     );
   }
 
-  // 5. Extraer el contenido interno del objeto
   const objectContent = content.substring(openBraceIndex + 1, closeBraceIndex);
+  const escapedKey = configObj.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const keyExistsRegex = new RegExp(
+    `(?:^|,|\\n)\\s*['"]?${escapedKey}['"]?\\s*:`,
+    "m",
+  );
+  if (keyExistsRegex.test(objectContent)) {
+    return;
+  }
+
   const trimmedContent = objectContent.trim();
   const hasProps = trimmedContent.length > 0;
 
-  // 6. Determinar si el objeto está en una sola línea o en múltiples líneas
   const isMultiLine = objectContent.includes("\n");
 
-  // 7. Detectar la indentación usada en las propiedades existentes
   let indent = "";
   if (hasProps) {
     const lines = objectContent.split("\n");
@@ -170,44 +172,39 @@ export async function addViteConfig<T>(
     }
   }
   if (!indent) {
-    indent = "  "; // indentación por defecto (2 espacios)
+    indent = "  ";
   }
 
-  // 8. Serializar el valor y construir la nueva línea con Handlebars
   const key = configObj.key;
   const valueStr = JSON.stringify(configObj.value);
-  const template = Handlebars.compile("{{key}}: {{{value}}}"); // triple {{{ }}} para no escapar
+  const template = Handlebars.compile("{{key}}: {{{value}}}");
   const newPropLine = template({ key, value: valueStr });
-
-  // 9. Decidir el texto a insertar (coma, saltos, etc.)
   let insertText = "";
   if (hasProps) {
-    // Verificar si el contenido ya termina con coma (ignorando espacios)
     const endsWithComma = /,\s*$/.test(trimmedContent);
     if (isMultiLine) {
-      // Multilínea: agregar nueva línea con indentación
       insertText = endsWithComma
         ? `\n${indent}${newPropLine}`
         : `,\n${indent}${newPropLine}`;
     } else {
-      // Una sola línea
       insertText = endsWithComma ? ` ${newPropLine}` : `, ${newPropLine}`;
     }
   } else {
-    // Objeto vacío: mantener el mismo estilo (una línea o multilínea)
     if (isMultiLine) {
       insertText = `\n${indent}${newPropLine}`;
     } else {
       insertText = ` ${newPropLine}`;
     }
   }
-
-  // 10. Insertar la nueva propiedad antes de la llave de cierre
   const newContent =
     content.substring(0, closeBraceIndex) +
     insertText +
     content.substring(closeBraceIndex);
 
-  // 11. Escribir el archivo modificado
   await fs.writeFile(filePath, newContent, "utf8");
+}
+
+export async function deleteFile(filePath: string): Promise<void> {
+  const rutaAbsoluta = path.resolve(filePath);
+  await fs.unlink(rutaAbsoluta);
 }

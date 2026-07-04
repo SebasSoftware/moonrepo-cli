@@ -4,18 +4,22 @@ import inquirer from "inquirer";
 import fs from "fs-extra";
 import path from "node:path";
 import { printBanner, printDivider, printTagline } from "./banner.ts";
+import { generateBackend } from "./generators/backend.ts";
+import { generateFrontend } from "./generators/frontend.ts";
+import { generateWorkspace } from "./generators/workspace.ts";
+import { colors } from "./ui.ts";
+import type {
+  CliAnswers,
+  BackendFramework,
+  FrontendFramework,
+} from "./types.d.ts";
+
 import {
   BACKEND_FRAMEWORKS,
   BACKEND_LABELS,
   FRONTEND_FRAMEWORKS,
   FRONTEND_LABELS,
-  type BackendFramework,
-  type FrontendFramework,
-} from "./enums.ts";
-import { generateBackend } from "./generators/backend.ts";
-import { generateFrontend } from "./generators/frontend.ts";
-import { generateWorkspace } from "./generators/workspace.ts";
-import { colors } from "./ui.ts";
+} from "./constants.ts";
 
 // ---------------------------------------------------------------------------
 // 1. Launch screen
@@ -29,13 +33,6 @@ printDivider();
 // ---------------------------------------------------------------------------
 // 2. Prompts
 // ---------------------------------------------------------------------------
-
-interface CliAnswers {
-  projectName: string;
-  frontend: FrontendFramework;
-  backend: BackendFramework;
-  withTailwind: boolean;
-}
 
 const { projectName } = await inquirer.prompt<{ projectName: string }>([
   {
@@ -68,18 +65,14 @@ const { frontend } = await inquirer.prompt<{ frontend: FrontendFramework }>([
   },
 ]);
 
-let withTailwind = false;
-if (frontend === FRONTEND_FRAMEWORKS.VITE) {
-  const { tailwind } = await inquirer.prompt<{ tailwind: boolean }>([
-    {
-      type: "confirm",
-      name: "tailwind",
-      message: colors.cyan("¿Quieres usar Tailwind CSS en el frontend?"),
-      default: true,
-    },
-  ]);
-  withTailwind = tailwind;
-}
+const { withTailwind } = await inquirer.prompt<{ withTailwind: boolean }>([
+  {
+    type: "confirm",
+    name: "withTailwind",
+    message: colors.cyan("¿Quieres usar Tailwind CSS en el frontend?"),
+    default: true,
+  },
+]);
 
 const { backend } = await inquirer.prompt<{ backend: BackendFramework }>([
   {
@@ -120,9 +113,14 @@ try {
   );
 
   try {
-    await generateFrontend(projectPath, answers.frontend, {
-      withTailwind: answers.withTailwind,
-    });
+    await generateFrontend(
+      projectPath,
+      answers.frontend,
+      {
+        withTailwind: answers.withTailwind,
+      },
+      answers,
+    );
   } catch (err) {
     throw err;
   }

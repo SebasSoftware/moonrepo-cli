@@ -2,6 +2,8 @@
 // Root workspace templates
 // ---------------------------------------------------------------------------
 
+import type { CliAnswers } from "./types.d.ts";
+
 export const turboJsonTemplate = `{
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
@@ -139,18 +141,6 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>
 );
-`;
-
-export const viteAppTsx = `export default function App() {
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-      <div className="text-center space-y-4">
-        <h1 className="text-5xl font-bold tracking-tight">Vite + React</h1>
-        <p className="text-slate-300">Scaffolded by Moonrepo CLI</p>
-      </div>
-    </main>
-  );
-}
 `;
 
 export const viteIndexCss = `body {
@@ -293,18 +283,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>{children}</body>
     </html>
-  );
-}
-`;
-
-export const nextAppPage = `export default function Home() {
-  return (
-    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ textAlign: "center" }}>
-        <h1 style={{ fontSize: 48, fontWeight: 700 }}>Next.js</h1>
-        <p style={{ color: "#64748b" }}>Scaffolded by Moonrepo CLI</p>
-      </div>
-    </main>
   );
 }
 `;
@@ -525,27 +503,11 @@ pnpm-debug.log*
 .DS_Store
 `;
 
-export const presentPageTailwind = `import React from "react";
+export const presentPageTailwind = (
+  props: CliAnswers,
+) => `import React from "react";
 
-interface PresentProps {
-  projectName: string;
-  frontend: string;
-  useTailwind: boolean;
-  backend: string;
-  gitReady: boolean;
-  frontendReady: boolean;
-  backendReady: boolean;
-}
-
-const Present: React.FC<PresentProps> = ({
-  projectName,
-  frontend,
-  useTailwind,
-  backend,
-  gitReady,
-  frontendReady,
-  backendReady,
-}) => {
+const Present = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 font-sans antialiased">
       <div className="max-w-2xl mx-auto py-12 px-4 flex flex-col justify-center items-center">
@@ -573,36 +535,32 @@ const Present: React.FC<PresentProps> = ({
 
         {/* Resumen de configuración - Fondo gris oscuro con borde sutil */}
         <div className="mt-10 bg-gray-800 rounded-xl p-6 shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-semibold text-[#FF3B30] flex items-center gap-2">
-            <span>✨</span> TOMORROW
-          </h2>
-
           <ul className="mt-4 space-y-2 text-base">
             <li>
               <span className="font-medium text-gray-400">
                 📦 Nombre del proyecto:
               </span>{" "}
               <span className="font-mono bg-gray-900 px-2 py-0.5 rounded text-[#A78BFA] border border-gray-700">
-                {projectName}
+                ${props.projectName}
               </span>
             </li>
             <li>
               <span className="font-medium text-gray-400">
                 ⚛️ Framework FRONTEND:
               </span>{" "}
-              <span className="text-white">{frontend}</span>
+              <span className="text-white">${props.frontend}</span>
             </li>
             <li>
               <span className="font-medium text-gray-400">
                 🎨 Tailwind CSS:
               </span>{" "}
-              <span className="text-white">{useTailwind ? "Sí" : "No"}</span>
+              <span className="text-white">${props.withTailwind ? "Sí" : "No"}</span>
             </li>
             <li>
               <span className="font-medium text-gray-400">
                 🖥️ Framework BACKEND:
               </span>{" "}
-              <span className="text-white">{backend}</span>
+              <span className="text-white">${props.backend}</span>
             </li>
           </ul>
 
@@ -610,38 +568,236 @@ const Present: React.FC<PresentProps> = ({
 
           <ul className="space-y-2 text-base">
             <li className="flex items-center gap-2">
-              <span className="text-[#22C55E] text-xl">✔</span> Git{" "}
-              <span className="text-white">
-                {gitReady ? "listo" : "no configurado"}
-              </span>
-            </li>
-            <li className="flex items-center gap-2">
               <span className="text-[#22C55E] text-xl">✔</span> Frontend{" "}
               <span className="text-white">
-                {frontendReady ? "listo" : "pendiente"}
+                ${"listo"}
               </span>
             </li>
             <li className="flex items-center gap-2">
               <span className="text-[#22C55E] text-xl">✔</span> Backend{" "}
               <span className="text-white">
-                {backendReady ? "listo" : "pendiente"}
+                ${"listo"}
               </span>
             </li>
           </ul>
-
-          {/* Mensaje de éxito con fondo púrpura semi-transparente */}
-          <div className="mt-6 p-4 bg-[#A78BFA]/10 rounded-md border border-[#A78BFA]/30">
-            <p className="text-gray-200">
-              🎉 ¡Listo! Tu monorepo está en{" "}
-              <code className="bg-gray-900 px-2 py-0.5 rounded font-mono text-[#FF3B30] border border-gray-700">
-                {projectName}
-              </code>
-            </p>
-          </div>
         </div>
 
         {/* Footer */}
         <div className="mt-10 text-center text-sm text-gray-500">
+          Hecho con ❤ por Moonrepo CLI
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Present;
+`;
+
+export const presentPage = (props: CliAnswers) => `import React from "react";
+
+const Present = () => {
+  const styles = {
+    page: {
+      minHeight: '100vh',
+      backgroundColor: '#111827',
+      color: '#f3f4f6',
+      fontFamily:
+        'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+      WebkitFontSmoothing: 'antialiased',
+      MozOsxFontSmoothing: 'grayscale',
+    },
+    wrapper: {
+      maxWidth: '42rem',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      paddingTop: '3rem',
+      paddingBottom: '3rem',
+      paddingLeft: '1rem',
+      paddingRight: '1rem',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: '3rem',
+      lineHeight: '1',
+      fontWeight: '700',
+      color: '#FF3B30',
+      textAlign: 'center' as const,
+      letterSpacing: '-0.025em',
+      filter:
+        'drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1))',
+    },
+    subtitle: {
+      marginTop: '0.75rem',
+      textAlign: 'center' as const,
+      fontSize: '1.125rem',
+      lineHeight: '1.75rem',
+      color: '#9ca3af',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    badgeContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.25rem',
+    },
+    badgePurple: {
+      borderRadius: '0.25rem',
+      background: 'rgba(76, 29, 149, 0.4)',
+      paddingLeft: '0.375rem',
+      paddingRight: '0.375rem',
+      paddingTop: '0.125rem',
+      paddingBottom: '0.125rem',
+      fontSize: '0.75rem',
+      lineHeight: '1rem',
+      fontFamily:
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      color: '#d8b4fe',
+    },
+    badgeBlue: {
+      borderRadius: '0.25rem',
+      background: 'rgba(30, 58, 138, 0.4)',
+      paddingLeft: '0.375rem',
+      paddingRight: '0.375rem',
+      paddingTop: '0.125rem',
+      paddingBottom: '0.125rem',
+      fontSize: '0.75rem',
+      lineHeight: '1rem',
+      fontFamily:
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      color: '#93c5fd',
+    },
+    badgeEmerald: {
+      borderRadius: '0.25rem',
+      background: 'rgba(6, 78, 59, 0.4)',
+      paddingLeft: '0.375rem',
+      paddingRight: '0.375rem',
+      paddingTop: '0.125rem',
+      paddingBottom: '0.125rem',
+      fontSize: '0.75rem',
+      lineHeight: '1rem',
+      fontFamily:
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      color: '#6ee7b7',
+    },
+    grayText: {
+      color: '#9ca3af',
+    },
+    card: {
+      marginTop: '2.5rem',
+      backgroundColor: '#1f2937',
+      borderRadius: '0.75rem',
+      padding: '1.5rem',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+      border: '1px solid #374151',
+    },
+    cardList: {
+      marginTop: '1rem',
+      listStyle: 'none',
+      padding: 0,
+    },
+    li: {
+      marginBottom: '0.5rem',
+    },
+    label: {
+      fontWeight: '500',
+      color: '#9ca3af',
+    },
+    valueMono: {
+      fontFamily:
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      backgroundColor: '#111827',
+      paddingLeft: '0.5rem',
+      paddingRight: '0.5rem',
+      paddingTop: '0.125rem',
+      paddingBottom: '0.125rem',
+      borderRadius: '0.25rem',
+      color: '#A78BFA',
+      border: '1px solid #374151',
+    },
+    valueWhite: {
+      color: '#ffffff',
+    },
+    hr: {
+      marginTop: '1rem',
+      marginBottom: '1rem',
+      border: 'none',
+      borderTop: '1px solid #374151',
+    },
+    checklistItem: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+    },
+    checkIcon: {
+      color: '#22C55E',
+      fontSize: '1.25rem',
+      lineHeight: '1.75rem',
+    },
+    footer: {
+      marginTop: '2.5rem',
+      textAlign: 'center' as const,
+      fontSize: '0.875rem',
+      lineHeight: '1.25rem',
+      color: '#6b7280',
+    },
+  };
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.wrapper}>
+        <h1 style={styles.title}>🚀 Moonrepo CLI</h1>
+
+        <div style={styles.subtitle}>
+          <span style={styles.badgeContainer}>
+            <span style={styles.badgePurple}>pnpm</span>
+            <span style={styles.grayText}> + </span>
+            <span style={styles.badgeBlue}>turbo</span>
+            <span style={styles.grayText}> + </span>
+            <span style={styles.badgeEmerald}>monorepo</span>
+          </span>{" "}
+          – scaffolded in seconds
+        </div>
+
+        <div style={styles.card}>
+          <ul style={styles.cardList}>
+            <li style={styles.li}>
+              <span style={styles.label}>📦 Nombre del proyecto:</span>{" "}
+              <span style={styles.valueMono}>${props.projectName}</span>
+            </li>
+            <li style={styles.li}>
+              <span style={styles.label}>⚛️ Framework FRONTEND:</span>{" "}
+              <span style={styles.valueWhite}>${props.frontend}</span>
+            </li>
+            <li style={styles.li}>
+              <span style={styles.label}>🎨 Tailwind CSS:</span>{" "}
+              <span style={styles.valueWhite}>${props.withTailwind ? "Sí" : "No"}</span>
+            </li>
+            <li style={styles.li}>
+              <span style={styles.label}>🖥️ Framework BACKEND:</span>{" "}
+              <span style={styles.valueWhite}>${props.backend}</span>
+            </li>
+          </ul>
+
+          <hr style={styles.hr} />
+
+          <ul style={styles.cardList}>
+            <li style={styles.checklistItem}>
+              <span style={styles.checkIcon}>✔</span> Frontend{" "}
+              <span style={styles.valueWhite}>listo</span>
+            </li>
+            <li style={styles.checklistItem}>
+              <span style={styles.checkIcon}>✔</span> Backend{" "}
+              <span style={styles.valueWhite}>listo</span>
+            </li>
+          </ul>
+        </div>
+
+        <div style={styles.footer}>
           Hecho con ❤ por Moonrepo CLI
         </div>
       </div>

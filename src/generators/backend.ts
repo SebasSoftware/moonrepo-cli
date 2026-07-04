@@ -6,11 +6,8 @@ import {
   checkFileExists,
   createFile,
 } from "../utils.ts";
-import {
-  BACKEND_FRAMEWORKS,
-  BACKEND_LABELS,
-  type BackendFramework,
-} from "../enums.ts";
+import type { BackendFramework } from "../types.d.ts";
+import { BACKEND_FRAMEWORKS, BACKEND_LABELS } from "../constants.ts";
 import {
   expressIndexTs,
   expressPackageJson,
