@@ -21,14 +21,13 @@ Moonrepo es una herramienta de línea de comandos (CLI) para **soplar proyectos 
    ```
 3. **Ejecuta la CLI por primera vez**:
    ```bash
-   pnpm run dev  # Inicia el modo de desarrollo
+   node src/index.ts
    ```
 
 ## 🏧 Características principales
 
 - **Soplar monorepos**: Crea estructuras básicas para proyectos con pnpm/Turbo.
 - **TypeScript-first**: Diseñado para proyectos con TS (versión 5.6.3 por defecto).
-- **Interfaz CLI** en `bin/moonrepo` para ejecutar comandos específicos.
 - **Modular**: Último para proyectos escalables con múltiples paquetes.
 
 ## 📍 Tech Stack
@@ -36,10 +35,10 @@ Moonrepo es una herramienta de línea de comandos (CLI) para **soplar proyectos 
 - **Herramientas principales**:
   - _pnpm_: Gestor de paquetes rápido.
   - _Turbo_: Gestor de monorepos optimizado.
-  - _TypeScript 5.6.3_: Lenguaje de desarrollo.
+  - _TypeScript_: Lenguaje de desarrollo.
 - **Dependencias clave**:
   ```bash
-  tsx, chalk, inquirer, ora, fs-extra, execa
+  chalk, inquirer, ora, fs-extra, execa
   ```
 
 ## 📡 Estructura del proyecto
@@ -53,15 +52,7 @@ moonrepo-cli/
 └── public/            # Recursos como la imagen del banner
 ```
 
-## ⮘ Comandos comunes
-
-| Comando          | Descripción                      |
-| ---------------- | -------------------------------- |
-| `pnpm run dev`   | Inicia el entorno de desarrollo  |
-| `pnpm run build` | Compila TypeScript a JavaScript  |
-| `moonrepo init`  | template personalizado (agregar) |
-
-> ⚠️ **Nota**: Algunos comandos están en desarrollo. Consulta `AGENT.md` para detalles técnicos.
+> ⚠️ **Nota**: Este herramienta aun esta en desarrollo, algunos comando podrian no funcionar.
 
 ## 📖 Documentación adicional
 
