@@ -1,19 +1,20 @@
 {
-  "name": "moonrepo-cli",
+  "name": "create-moonrepo",
   "version": "1.0.0",
   "description": "Scaffold a pnpm + Turbo monorepo in seconds",
   "type": "module",
   "bin": {
-    "create-moonrepo": "./src/index.ts"
+    "create-moonrepo": "./dist/index.ts"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
     "start": "node src/index.ts",
-    "build": "tsc",
+    "build": "tsup src/index.ts --format esm --clean --minify",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
-    "src"
+    "dist",
+    "README.md"
   ],
   "keywords": [
     "monorepo",
@@ -23,7 +24,7 @@
     "cli"
   ],
   "author": "https://github.com/SebasSoftware",
-  "license": "ISC",
+  "license": "MIT",
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
@@ -43,6 +44,7 @@
     "@types/express": "^5.0.6",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.10.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.22.4",
     "typescript": "^5.6.3"
   }
