@@ -1,10 +1,10 @@
 {
-  "name": "create-moonrepo",
+  "name": "moonrepo",
   "version": "1.0.0",
   "description": "Scaffold a pnpm + Turbo monorepo in seconds",
   "type": "module",
   "bin": {
-    "create-moonrepo": "./dist/index.ts"
+    "create-moonrepo": "./dist/index.js"
   },
   "scripts": {
     "dev": "tsx src/index.ts",

@@ -1,6 +1,8 @@
 import chalk from "chalk";
 import { colors } from "./ui.ts";
 
+console.log("banner.ts");
+
 /**
  * Big "MOONREPO" wordmark in the spirit of Claude Code's launcher.
  *
